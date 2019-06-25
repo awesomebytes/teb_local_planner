@@ -52,6 +52,7 @@ else( WIN32 )
         	      PATHS /usr/local/include 
         	            /usr/include 
         	            /usr/include/suitesparse/ 
+                      /tmp/gentoo/usr/include
         	            ${CMAKE_SOURCE_DIR}/MacOS/Libs/cholmod
               	      PATH_SUFFIXES cholmod/ CHOLMOD/ )
    	
@@ -62,6 +63,7 @@ else( WIN32 )
                             /usr/lib/x86_64-linux-gnu
                             /usr/lib/i386-linux-gnu
                             /usr/local/lib
+                            /tmp/gentoo/usr/lib
                             /usr/lib/arm-linux-gnueabihf/
                             /usr/lib/aarch64-linux-gnu/
                             /usr/lib/arm-linux-gnueabi/
