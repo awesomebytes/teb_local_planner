@@ -391,13 +391,13 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   if (is_first_computed_speed && cmd_vel.linear.x < 0.0 && !cfg_.trajectory.allow_init_with_backwards_motion){
     ROS_ERROR("Calculated negative velocity at start of plan with allow_init_with_backwards_motion being false");
     ROS_ERROR("Aborting this local plan.");
-      cmd_vel.linear.x = cmd_vel.linear.y = cmd_vel.angular.z = 0;
-      last_cmd_ = cmd_vel;
-      planner_->clearPlanner();
-      ++no_infeasible_plans_; // increase number of infeasible solutions in a row
-      time_last_infeasible_plan_ = ros::Time::now();
-      is_first_computed_speed = false;
-      return false;
+      // cmd_vel.linear.x = cmd_vel.linear.y = cmd_vel.angular.z = 0;
+      // last_cmd_ = cmd_vel;
+      // planner_->clearPlanner();
+      // ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+      // time_last_infeasible_plan_ = ros::Time::now();
+      // is_first_computed_speed = false;
+      // return false;
   }
 
   // Hardcode our error case
