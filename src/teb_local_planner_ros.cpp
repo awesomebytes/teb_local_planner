@@ -208,6 +208,9 @@ bool TebLocalPlannerROS::setPlan(const std::vector<geometry_msgs::PoseStamped>& 
 
   // reset goal_reached_ flag
   goal_reached_ = false;
+
+  // To keep track if the first speed is generated correctly
+  is_first_computed_speed = true;
   
   return true;
 }
@@ -372,10 +375,48 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     last_cmd_ = cmd_vel;
     return false;
   }
+
+  ROS_DEBUG_STREAM("Unsaturated Velocity command: x,y,theta: " << cmd_vel.linear.x << " " <<
+    cmd_vel.linear.y << " " << cmd_vel.angular.z);
   
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
   saturateVelocity(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z, cfg_.robot.max_vel_x, cfg_.robot.max_vel_y,
                    cfg_.robot.max_vel_theta, cfg_.robot.max_vel_x_backwards);
+
+
+  ROS_DEBUG_STREAM("  Saturated Velocity command: x,y,theta: " << cmd_vel.linear.x << " " <<
+    cmd_vel.linear.y << " " << cmd_vel.angular.z);
+
+ // Try to detect this cleanly...
+  if (is_first_computed_speed && cmd_vel.linear.x < 0.0 && !cfg_.trajectory.allow_init_with_backwards_motion){
+    ROS_ERROR("Calculated negative velocity at start of plan with allow_init_with_backwards_motion being false");
+    ROS_ERROR("Aborting this local plan.");
+      cmd_vel.linear.x = cmd_vel.linear.y = cmd_vel.angular.z = 0;
+      last_cmd_ = cmd_vel;
+      planner_->clearPlanner();
+      ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+      time_last_infeasible_plan_ = ros::Time::now();
+      is_first_computed_speed = false;
+      return false;
+  }
+
+  // Hardcode our error case
+  if (is_first_computed_speed && cmd_vel.angular.z == cfg_.robot.max_vel_theta){
+    // Just for curiosity check if we are going out of acceleration limits?
+    // robot_vel_.angular.z contains current vel z
+    ROS_ERROR("Aborting this local plan as it started with max angular z and thats not a legal command.");
+      cmd_vel.linear.x = cmd_vel.linear.y = cmd_vel.angular.z = 0;
+      last_cmd_ = cmd_vel;
+      planner_->clearPlanner();
+      ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+      time_last_infeasible_plan_ = ros::Time::now();
+      is_first_computed_speed = false;
+      return false;
+  }
+  is_first_computed_speed = false;
+
+
+
 
   // convert rot-vel to steering angle if desired (carlike robot).
   // The min_turning_radius is allowed to be slighly smaller since it is a soft-constraint
@@ -394,6 +435,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
       return false;
     }
   }
+
   
   // a feasible solution should be found, reset counter
   no_infeasible_plans_ = 0;
