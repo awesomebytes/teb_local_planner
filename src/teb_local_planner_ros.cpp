@@ -401,7 +401,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   }
 
   // Hardcode our error case
-  if (is_first_computed_speed && cmd_vel.angular.z == cfg_.robot.max_vel_theta){
+  if (is_first_computed_speed && abs(cmd_vel.angular.z) == cfg_.robot.max_vel_theta){
     // Just for curiosity check if we are going out of acceleration limits?
     // robot_vel_.angular.z contains current vel z
     ROS_ERROR("Aborting this local plan as it started with max angular z and thats not a legal command.");
